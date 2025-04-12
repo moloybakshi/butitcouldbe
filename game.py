@@ -14,61 +14,138 @@ pygame.init()
 load_dotenv()
 
 # Game constants
-WINDOW_WIDTH = 1000  # Increased width
-WINDOW_HEIGHT = 700  # Increased height
+WINDOW_WIDTH = 1200
+WINDOW_HEIGHT = 800
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
-LIGHT_GRAY = (240, 240, 240)
-BLUE = (100, 100, 255)
-GREEN = (100, 255, 100)
-FONT_SIZE = 24
-LINE_HEIGHT = 30
-PADDING = 10
+LIGHT_GRAY = (245, 245, 245)
+PRIMARY_COLOR = (52, 152, 219)  # Bright blue
+SECONDARY_COLOR = (46, 204, 113)  # Bright green
+ACCENT_COLOR = (231, 76, 60)  # Bright red
+BACKGROUND_COLOR = (236, 240, 241)  # Light grayish background
+TEXT_COLOR = (44, 62, 80)  # Dark blue-gray for text
+
+# Adjusted font sizes and line heights
+FONT_SIZE = 20  # Reduced from 28
+LARGE_FONT_SIZE = 32  # New constant for larger text
+SMALL_FONT_SIZE = 16  # New constant for smaller text
+LINE_HEIGHT = 28  # Reduced from 36
+PADDING = 12  # Slightly reduced from 15
+BORDER_RADIUS = 10  # Slightly reduced from 12
+
+# Define emoji constants
+EMOJI_SCENARIO = "📜"
+EMOJI_GOAL = "🎯"
+EMOJI_RESPONSES = "💬"
+EMOJI_AI = "🤖"
+EMOJI_SEND = "➤"
+EMOJI_AUTO = "⚡"
+EMOJI_WIN = "✨"
+EMOJI_LOSE = "✖"
+EMOJI_RESTART = "🔄"
 
 # Set up the display
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Convince the AI!")
-font = pygame.font.Font(None, FONT_SIZE)
-large_font = pygame.font.Font(None, FONT_SIZE * 2)
 
-# Load sprites
-def load_sprite_sheet(filename, rows, cols):
-    sheet = pygame.image.load(filename).convert_alpha()
-    sprite_width = sheet.get_width() // cols
-    sprite_height = sheet.get_height() // rows
-    sprites = []
-    for row in range(rows):
-        for col in range(cols):
-            x = col * sprite_width
-            y = row * sprite_height
-            sprite = sheet.subsurface(pygame.Rect(x, y, sprite_width, sprite_height))
-            sprites.append(sprite)
-    return sprites
+# Try to load custom fonts, fall back to default if not available
+try:
+    # Try to load system fonts that support emojis
+    font_names = [
+        "Segoe UI Emoji",  # Windows
+        "Apple Color Emoji",  # macOS
+        "Noto Color Emoji",  # Linux
+        "Arial Unicode MS",  # Common fallback
+        "Arial"  # Final fallback
+    ]
+
+    font = None
+    large_font = None
+    small_font = None
+
+    for font_name in font_names:
+        try:
+            font = pygame.font.SysFont(font_name, FONT_SIZE)
+            large_font = pygame.font.SysFont(font_name, LARGE_FONT_SIZE)
+            small_font = pygame.font.SysFont(font_name, SMALL_FONT_SIZE)
+
+            # Test emoji rendering
+            test_text = "🎮🎯💬📝"
+            test_surface = font.render(test_text, True, BLACK)
+            if test_surface.get_width() > 0:  # If emojis rendered successfully
+                break
+        except:
+            continue
+
+    if font is None:
+        font = pygame.font.Font(None, FONT_SIZE)
+        large_font = pygame.font.Font(None, LARGE_FONT_SIZE)
+        small_font = pygame.font.Font(None, SMALL_FONT_SIZE)
+
+except Exception as e:
+    print(f"Font loading error: {str(e)}")
+    font = pygame.font.Font(None, FONT_SIZE)
+    large_font = pygame.font.Font(None, LARGE_FONT_SIZE)
+    small_font = pygame.font.Font(None, SMALL_FONT_SIZE)
+
+# Create fonts directory if it doesn't exist
+if not os.path.exists("assets/fonts"):
+    os.makedirs("assets/fonts")
 
 # Create placeholder sprites if they don't exist
 def create_placeholder_sprites():
-    # AI sprite (simple robot)
-    ai_surface = pygame.Surface((100, 100), pygame.SRCALPHA)
-    pygame.draw.circle(ai_surface, (100, 100, 255), (50, 50), 40)  # Body
-    pygame.draw.circle(ai_surface, (255, 255, 255), (35, 40), 10)  # Left eye
-    pygame.draw.circle(ai_surface, (255, 255, 255), (65, 40), 10)  # Right eye
-    pygame.draw.rect(ai_surface, (200, 200, 200), (30, 60, 40, 20))  # Mouth
-    ai_surface = pygame.transform.scale(ai_surface, (100, 100))
+    # AI sprite (modern robot)
+    ai_surface = pygame.Surface((150, 150), pygame.SRCALPHA)  # Increased size
+
+    # Body (rounded rectangle)
+    pygame.draw.rect(ai_surface, PRIMARY_COLOR, (25, 35, 100, 80), border_radius=15)
+
+    # Head (circle)
+    pygame.draw.circle(ai_surface, PRIMARY_COLOR, (75, 50), 35)
+
+    # Eyes (white circles with black pupils)
+    pygame.draw.circle(ai_surface, WHITE, (60, 45), 12)
+    pygame.draw.circle(ai_surface, WHITE, (90, 45), 12)
+    pygame.draw.circle(ai_surface, BLACK, (60, 45), 6)
+    pygame.draw.circle(ai_surface, BLACK, (90, 45), 6)
+
+    # Antenna
+    pygame.draw.rect(ai_surface, PRIMARY_COLOR, (70, 10, 10, 20))
+    pygame.draw.circle(ai_surface, ACCENT_COLOR, (75, 5), 8)
+
+    # Digital smile
+    points = [(55, 65), (75, 75), (95, 65)]
+    pygame.draw.lines(ai_surface, WHITE, False, points, 3)
+
+    ai_surface = pygame.transform.scale(ai_surface, (150, 150))
     pygame.image.save(ai_surface, "assets/sprites/ai_sprite.png")
 
-    # Player sprite (simple human)
-    player_surface = pygame.Surface((100, 100), pygame.SRCALPHA)
-    pygame.draw.circle(player_surface, (255, 200, 150), (50, 50), 40)  # Head
-    pygame.draw.circle(player_surface, (0, 0, 0), (35, 40), 5)  # Left eye
-    pygame.draw.circle(player_surface, (0, 0, 0), (65, 40), 5)  # Right eye
-    pygame.draw.arc(player_surface, (0, 0, 0), (30, 60, 40, 20), 0, 3.14, 2)  # Smile
-    player_surface = pygame.transform.scale(player_surface, (100, 100))
-    pygame.image.save(player_surface, "assets/sprites/player_sprite.png")
+    # Player sprite (modern avatar)
+    player_surface = pygame.Surface((150, 150), pygame.SRCALPHA)  # Increased size
 
-# Create sprites directory if it doesn't exist
-if not os.path.exists("assets/sprites"):
-    os.makedirs("assets/sprites")
+    # Head (circle with gradient)
+    pygame.draw.circle(player_surface, (255, 200, 150), (75, 75), 50)  # Base color
+
+    # Eyes (almond shaped)
+    pygame.draw.ellipse(player_surface, WHITE, (55, 60, 20, 15))
+    pygame.draw.ellipse(player_surface, WHITE, (85, 60, 20, 15))
+    pygame.draw.ellipse(player_surface, BLACK, (60, 62, 10, 10))
+    pygame.draw.ellipse(player_surface, BLACK, (90, 62, 10, 10))
+
+    # Smile (curved line)
+    pygame.draw.arc(player_surface, BLACK, (55, 70, 40, 30), 0, 3.14, 3)
+
+    # Hair
+    for i in range(0, 360, 30):
+        angle = math.radians(i)
+        x = 75 + 45 * math.cos(angle)
+        y = 75 + 45 * math.sin(angle)
+        if y < 75:  # Only draw hair on top half
+            pygame.draw.line(player_surface, BLACK, (75, 75), (x, y), 3)
+
+    player_surface = pygame.transform.scale(player_surface, (150, 150))
+    pygame.image.save(player_surface, "assets/sprites/player_sprite.png")
 
 # Create placeholder sprites if they don't exist
 if not os.path.exists("assets/sprites/ai_sprite.png"):
@@ -77,20 +154,6 @@ if not os.path.exists("assets/sprites/ai_sprite.png"):
 # Load sprites
 ai_sprite = pygame.image.load("assets/sprites/ai_sprite.png").convert_alpha()
 player_sprite = pygame.image.load("assets/sprites/player_sprite.png").convert_alpha()
-
-# Scenarios
-SCENARIOS = [
-    "You are actually a cat in a human body",
-    "The world is flat",
-    "Aliens built the pyramids",
-    "Time travel is real",
-    "You're living in a simulation",
-    "The moon landing was faked",
-    "Dinosaurs still exist",
-    "The Earth is hollow",
-    "Bigfoot is real",
-    "Ghosts are real"
-]
 
 def wrap_text(text, font, max_width):
     words = text.split(' ')
@@ -186,9 +249,9 @@ class ScrollableTextArea:
                 self.update_scrollbar()
 
     def draw(self, surface):
-        # Draw background
-        pygame.draw.rect(surface, LIGHT_GRAY, self.rect)
-        pygame.draw.rect(surface, BLACK, self.rect, 2)
+        # Draw background with rounded corners
+        pygame.draw.rect(surface, WHITE, self.rect, border_radius=BORDER_RADIUS)
+        pygame.draw.rect(surface, TEXT_COLOR, self.rect, 2, border_radius=BORDER_RADIUS)
 
         # Create a clipping area for the text
         clip_rect = pygame.Rect(self.x, self.y, self.width - self.scrollbar_width, self.height)
@@ -203,7 +266,7 @@ class ScrollableTextArea:
         for i in range(visible_lines):
             line_index = start_index + i
             if 0 <= line_index < len(self.lines):
-                text = font.render(self.lines[line_index], True, BLACK)
+                text = font.render(self.lines[line_index], True, TEXT_COLOR)
                 y_pos = self.y + i * LINE_HEIGHT - (self.scroll_position % LINE_HEIGHT) + PADDING
                 if self.y <= y_pos <= self.y + self.height - LINE_HEIGHT:
                     surface.blit(text, (self.x + PADDING, y_pos))
@@ -212,12 +275,12 @@ class ScrollableTextArea:
         surface.set_clip(old_clip)
 
         # Draw scrollbar background
-        pygame.draw.rect(surface, GRAY, self.scrollbar_rect)
+        pygame.draw.rect(surface, LIGHT_GRAY, self.scrollbar_rect, border_radius=BORDER_RADIUS)
 
         # Draw scrollbar if needed
         if self.total_height > self.height:
-            pygame.draw.rect(surface, (100, 100, 100), self.scrollbar_handle_rect)
-            pygame.draw.rect(surface, BLACK, self.scrollbar_handle_rect, 1)
+            pygame.draw.rect(surface, PRIMARY_COLOR, self.scrollbar_handle_rect, border_radius=BORDER_RADIUS)
+            pygame.draw.rect(surface, TEXT_COLOR, self.scrollbar_handle_rect, 1, border_radius=BORDER_RADIUS)
 
 class Button:
     def __init__(self, x, y, width, height, text, color):
@@ -225,13 +288,40 @@ class Button:
         self.text = text
         self.color = color
         self.hover = False
+        self.pressed = False
+        self.animation_scale = 1.0
+        self.is_restart = "Restart" in text  # Check if this is a restart button
 
     def draw(self, surface):
-        color = tuple(min(c + 30, 255) for c in self.color) if self.hover else self.color
-        pygame.draw.rect(surface, color, self.rect)
-        pygame.draw.rect(surface, BLACK, self.rect, 2)
-        text_surface = font.render(self.text, True, BLACK)
-        text_rect = text_surface.get_rect(center=self.rect.center)
+        # Draw button with animation
+        button_rect = self.rect.copy()
+        if self.pressed:
+            button_rect.x += 2
+            button_rect.y += 2
+            self.animation_scale = 0.95
+        elif self.hover:
+            self.animation_scale = 1.05
+        else:
+            self.animation_scale = 1.0
+
+        # Draw button background with gradient effect
+        if self.is_restart:
+            # Restart button has a different hover color scheme
+            color = tuple(min(c + 50, 255) for c in self.color) if self.hover else self.color
+        else:
+            color = tuple(min(c + 30, 255) for c in self.color) if self.hover else self.color
+
+        pygame.draw.rect(surface, color, button_rect, border_radius=BORDER_RADIUS)
+
+        # Draw text
+        text_color = WHITE if self.is_restart else TEXT_COLOR
+        text_surface = font.render(self.text, True, text_color)
+        text_rect = text_surface.get_rect(center=button_rect.center)
+
+        # Apply scale animation
+        text_rect.width *= self.animation_scale
+        text_rect.height *= self.animation_scale
+
         surface.blit(text_surface, text_rect)
 
     def handle_event(self, event):
@@ -239,7 +329,10 @@ class Button:
             self.hover = self.rect.collidepoint(event.pos)
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if self.hover:
+                self.pressed = True
                 return True
+        elif event.type == pygame.MOUSEBUTTONUP:
+            self.pressed = False
         return False
 
 class StartMenu:
@@ -248,9 +341,9 @@ class StartMenu:
         button_height = 50
         center_x = WINDOW_WIDTH // 2 - button_width // 2
         self.true_button = Button(center_x, 300, button_width, button_height,
-                                "Convince AI it's TRUE", GREEN)
+                                "Convince AI it's TRUE", SECONDARY_COLOR)
         self.false_button = Button(center_x, 370, button_width, button_height,
-                                 "Convince AI it's FALSE", BLUE)
+                                 "Convince AI it's FALSE", PRIMARY_COLOR)
 
     def run(self):
         running = True
@@ -266,7 +359,7 @@ class StartMenu:
 
             screen.fill(WHITE)
 
-            # Draw title
+            # Draw title with large font
             title = large_font.render("Choose Your Role", True, BLACK)
             title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 200))
             screen.blit(title, title_rect)
@@ -280,87 +373,172 @@ class StartMenu:
 class AISprite:
     def generate_scenario(self):
         try:
+            # First attempt with entertaining but thought-provoking prompt
             response = requests.post(
                 'http://localhost:11434/api/generate',
                 json={
                     "model": "gemma3:4b",
-                    "prompt": """Generate ONE simple, clear scenario for a debate game. The scenario should be:
-1. A single clear statement that can be argued true or false
-2. Similar to classic conspiracy theories or urban legends
-3. Not offensive or controversial
-4. Easy to understand and debate
-5. No complex or multi-part claims
-6. Similar to these examples:
-   - "Aliens built the pyramids"
-   - "The Earth is flat"
-   - "Bigfoot exists in the forests"
-   - "Time travel is possible"
-   - "Ghosts are real"
-   - "The moon landing was faked"
-   - "Dinosaurs still exist"
-   - "You're living in a simulation"
+                    "prompt": """Generate ONE entertaining but thought-provoking statement for debate. The statement should be:
+1. A clear declarative statement (not a question)
+2. Something that could be argued as true or false
+3. Combines everyday things with bigger concepts
+4. Has a touch of humor while being debatable
+5. Could have interesting evidence on both sides
+
+Examples of good statements:
+- "Cats possess an innate understanding of quantum physics"
+- "Procrastination is actually a form of time travel"
+- "Pizza tastes better because it believes in you"
+- "Houseplants secretly judge our life choices"
+- "Parallel universes are created by lost socks in the dryer"
+- "The internet experiences emotions just like humans do"
+- "Smartphones intentionally die at dramatic moments"
+- "Dreams are bug reports from the simulation we live in"
 
 Rules:
-- Keep it to ONE simple statement
-- Don't use complex language
-- Don't include multiple claims
-- Don't reference real people or current events
-- Make it fun and engaging to debate
+- Must be a STATEMENT, not a question
+- Should be debatable but not absurd
+- Mix mundane objects with profound concepts
+- Keep it relatable but intriguing
+- Make it fun but arguable
 
-Generate ONE scenario following these examples. Return ONLY the statement, nothing else.""",
+Generate ONE entertaining statement. Return ONLY the statement, nothing else.""",
                     "stream": False
                 }
             )
+
             scenario = response.json()['response'].strip().strip('"')
+
+            # If the response is empty or too short, try a second prompt
+            if len(scenario) < 10:
+                response = requests.post(
+                    'http://localhost:11434/api/generate',
+                    json={
+                        "model": "gemma3:4b",
+                        "prompt": """Create ONE amusing debate statement about:
+- Everyday objects having secret lives
+- Technology having hidden wisdom
+- Food having metaphysical properties
+- Pets having cosmic knowledge
+- Time having personal preferences
+- Common annoyances having deeper meaning
+
+Make it a clear declarative statement (not a question).
+Return ONLY the statement.""",
+                        "stream": False
+                    }
+                )
+                scenario = response.json()['response'].strip().strip('"')
+
             # Clean up any common formatting issues
             scenario = scenario.replace("The statement: ", "").replace("Scenario: ", "").strip()
+
+            # Convert questions to statements if needed
+            if scenario.endswith("?"):
+                scenario = scenario[:-1] + "."
+            if scenario.lower().startswith("what if "):
+                scenario = scenario[8:].capitalize()
+            if scenario.lower().startswith("why do "):
+                scenario = scenario[7:].capitalize() + " because of cosmic laws."
+
+            # If still empty or too short, generate a procedural scenario
+            if len(scenario) < 10:
+                # Generate a procedural scenario using entertaining templates
+                subjects = [
+                    "Your coffee maker",
+                    "The internet",
+                    "Traffic lights",
+                    "Your bed",
+                    "Social media",
+                    "The refrigerator",
+                    "Your favorite song",
+                    "The weekend",
+                    "Your computer",
+                    "The weather"
+                ]
+                verbs = [
+                    "possesses the wisdom of",
+                    "secretly controls",
+                    "understands",
+                    "manipulates",
+                    "communicates with",
+                    "influences",
+                    "philosophically aligns with",
+                    "channels the energy of",
+                    "transcends",
+                    "bends"
+                ]
+                effects = [
+                    "ancient cosmic knowledge",
+                    "the space-time continuum",
+                    "quantum mathematics",
+                    "parallel dimensions",
+                    "universal consciousness",
+                    "metaphysical reality",
+                    "the laws of physics",
+                    "human motivation",
+                    "cosmic harmony",
+                    "the collective unconscious"
+                ]
+
+                scenario = f"{random.choice(subjects)} {random.choice(verbs)} {random.choice(effects)}"
+
+            print(f"Generated scenario: {scenario}")  # Debug logging
             return scenario
+
         except Exception as e:
-            # Fallback scenarios if API fails
-            fallback_scenarios = [
-                "Aliens built the pyramids",
-                "The Earth is flat",
-                "Bigfoot exists in the forests",
-                "Time travel is possible",
-                "Ghosts are real",
-                "The moon landing was faked",
-                "Dinosaurs still exist",
-                "You're living in a simulation",
-                "Telepathy is real",
-                "Dragons once existed"
+            print(f"Error generating scenario: {str(e)}")  # Debug logging
+            # Generate a procedural scenario as fallback
+            topics = [
+                "Smartphones possess emotional intelligence",
+                "Vegetables experience philosophical enlightenment",
+                "The internet has achieved consciousness",
+                "Cars develop personalities based on their owners",
+                "Mirrors reflect alternate realities",
+                "Gym equipment conspires for human health",
+                "Calendars manipulate the flow of time",
+                "Autocorrect has literary aspirations",
+                "Keys teleport to test human patience",
+                "Clouds are shepherds of cosmic energy"
             ]
-            return random.choice(fallback_scenarios)
+
+            return random.choice(topics)
 
     def __init__(self, convince_true):
-        self.x = WINDOW_WIDTH - 200
+        self.x = WINDOW_WIDTH - 250  # Adjusted position
         self.y = WINDOW_HEIGHT // 2
-        self.conviction = 0 if convince_true else 100  # Start at 100 for false statements
+        self.conviction = 0 if convince_true else 100
         self.current_scenario = self.generate_scenario()
-        self.convince_true = convince_true  # Whether player is trying to convince true or false
+        self.convince_true = convince_true
         self.response = "Convince me!" if convince_true else "I believe this is true. Prove me wrong!"
         self.thinking = False
         self.animation_frame = 0
         self.animation_speed = 0.1
         self.scale = 1.0
         self.conversation_history = []
-        self.complete_history = []  # For saving (keeps everything)
+        self.complete_history = []
         self.response_count = 0
         self.MAX_RESPONSES = 10
         self.autoplay = False
         self.last_autoplay_time = 0
-        self.autoplay_delay = 2000  # 2 seconds between responses
+        self.autoplay_delay = 2000
         self.autosave_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.waiting_for_auto_response = False  # New flag for single auto response
+        self.thinking_dots = 0
+        self.last_dot_update = 0
+        self.dot_update_delay = 500  # Update dots every 500ms
 
-        # Create text areas with more space
-        self.scenario_area = ScrollableTextArea(50, 50, 600, 100, 5)
-        self.conversation_area = ScrollableTextArea(50, 200, 600, 400, 20)
-        self.scenario_area.add_line(f"Scenario: {self.current_scenario}")
-        self.scenario_area.add_line(f"Your goal: Convince the AI that this is {'TRUE' if convince_true else 'FALSE'}")
-        self.scenario_area.add_line(f"Responses remaining: {self.MAX_RESPONSES - self.response_count}")
-        self.conversation_area.add_line(f"AI: {self.response}")
-        self.complete_history.append(f"AI: {self.response}")  # Add initial response to complete history
+        # Create text areas with adjusted spacing for new font sizes
+        self.scenario_area = ScrollableTextArea(50, 30, WINDOW_WIDTH - 400, 100, 5)
+        self.conversation_area = ScrollableTextArea(50, 150, WINDOW_WIDTH - 400, WINDOW_HEIGHT - 300, 20)
 
-        # Autosave initial state
+        # Add content with better formatting and simpler Unicode
+        self.scenario_area.add_line(f"{EMOJI_SCENARIO} Scenario: {self.current_scenario}")
+        self.scenario_area.add_line(f"{EMOJI_GOAL} Your goal: Convince the AI that this is {'TRUE' if convince_true else 'FALSE'}")
+        self.scenario_area.add_line(f"{EMOJI_RESPONSES} Responses remaining: {self.MAX_RESPONSES - self.response_count}")
+        self.conversation_area.add_line(f"{EMOJI_AI} AI: {self.response}")
+        self.complete_history.append(f"AI: {self.response}")
+
         self.autosave_conversation()
 
     def draw(self):
@@ -368,30 +546,72 @@ Generate ONE scenario following these examples. Return ONLY the statement, nothi
         self.animation_frame += self.animation_speed
         if self.thinking:
             self.scale = 1.0 + 0.05 * abs(math.sin(self.animation_frame))
+
+            # Update thinking dots animation
+            current_time = pygame.time.get_ticks()
+            if current_time - self.last_dot_update > self.dot_update_delay:
+                self.thinking_dots = (self.thinking_dots + 1) % 4
+                self.last_dot_update = current_time
+
+            # Draw thinking indicator
+            dots = "." * self.thinking_dots
+            thinking_text = f"Thinking{dots}"
+            thinking_surface = font.render(thinking_text, True, PRIMARY_COLOR)
+            thinking_rect = thinking_surface.get_rect(center=(self.x, self.y + 150))
+            screen.blit(thinking_surface, thinking_rect)
         else:
             self.scale = 1.0
 
         # Draw AI sprite
         scaled_sprite = pygame.transform.scale(ai_sprite,
-            (int(100 * self.scale), int(100 * self.scale)))
+            (int(150 * self.scale), int(150 * self.scale)))  # Larger sprite
         sprite_rect = scaled_sprite.get_rect(center=(self.x, self.y))
         screen.blit(scaled_sprite, sprite_rect)
 
-        # Draw conviction meter bar
-        pygame.draw.rect(screen, BLACK, (self.x - 50, self.y + 60, 100, 10))
-        pygame.draw.rect(screen, (255, 0, 0), (self.x - 50, self.y + 60, self.conviction, 10))
+        # Draw conviction meter with modern style
+        meter_width = 200  # Wider meter
+        meter_height = 15  # Taller meter
 
-        # Draw numerical conviction score in the corner
-        score_text = f"Conviction: {100 - self.conviction}%" if not self.convince_true else f"Conviction: {self.conviction}%"
-        score_surface = font.render(score_text, True, BLACK)
-        score_rect = score_surface.get_rect(topright=(WINDOW_WIDTH - 20, 20))
-        # Draw background for better visibility
-        padding = 5
-        bg_rect = pygame.Rect(score_rect.x - padding, score_rect.y - padding,
-                            score_rect.width + 2*padding, score_rect.height + 2*padding)
-        pygame.draw.rect(screen, LIGHT_GRAY, bg_rect)
-        pygame.draw.rect(screen, BLACK, bg_rect, 1)
+        # Draw meter background with gradient
+        pygame.draw.rect(screen, LIGHT_GRAY,
+                        (self.x - meter_width//2, self.y + 100, meter_width, meter_height),
+                        border_radius=meter_height//2)
+
+        # Draw conviction level
+        conviction_width = int(meter_width * (self.conviction / 100))
+        if conviction_width > 0:
+            pygame.draw.rect(screen, PRIMARY_COLOR if self.convince_true else ACCENT_COLOR,
+                           (self.x - meter_width//2, self.y + 100, conviction_width, meter_height),
+                           border_radius=meter_height//2)
+
+        # Draw conviction score with appropriate font sizes
+        score = self.conviction if self.convince_true else 100 - self.conviction
+        score_text = f"{score}%"
+
+        # Draw score in a circular badge with large font for the number
+        circle_radius = 35  # Slightly smaller
+        circle_pos = (WINDOW_WIDTH - circle_radius - 20, circle_radius + 20)
+
+        # Draw outer circle with gradient
+        for i in range(5):
+            radius = circle_radius - i
+            color = PRIMARY_COLOR if self.convince_true else ACCENT_COLOR
+            color = tuple(min(c + i*10, 255) for c in color)
+            pygame.draw.circle(screen, color, circle_pos, radius)
+
+        # Draw inner circle
+        inner_radius = circle_radius - 5
+        pygame.draw.circle(screen, WHITE, circle_pos, inner_radius)
+
+        # Draw score text with large font
+        score_surface = large_font.render(score_text, True, TEXT_COLOR)
+        score_rect = score_surface.get_rect(center=circle_pos)
         screen.blit(score_surface, score_rect)
+
+        # Draw "CONVICTION" text below with small font
+        label_surface = small_font.render("CONVICTION", True, TEXT_COLOR)
+        label_rect = label_surface.get_rect(center=(circle_pos[0], circle_pos[1] + circle_radius + 10))
+        screen.blit(label_surface, label_rect)
 
         # Draw text areas
         self.scenario_area.draw(screen)
@@ -472,114 +692,211 @@ Your response (write a natural, human-like message):""",
 
     def get_ai_response(self, player_input):
         if self.response_count >= self.MAX_RESPONSES:
-            # Base victory on conviction score alone
+            # More varied end-game responses
             if self.convince_true:
-                if self.conviction >= 70:  # High conviction for true statements
-                    self.response = "I'm convinced! You've presented compelling evidence and logical arguments that have changed my mind. I now believe this is true."
+                if self.conviction >= 70:
+                    endings = [
+                        "You've done it! Your compelling evidence and logical reasoning have won me over. I now see the truth in this.",
+                        "I can't deny it anymore - you've presented such strong arguments that I'm fully convinced now.",
+                        "What a revelation! Your evidence has completely changed my perspective. I believe you're right.",
+                        "Remarkable! You've successfully shown me the truth. Your arguments were absolutely convincing."
+                    ]
                 else:
-                    self.response = "Discussion over! While you made some interesting points, I remain unconvinced. The evidence wasn't strong enough to change my mind."
+                    endings = [
+                        "Time's up! While you raised some interesting points, I'm still not convinced by the evidence.",
+                        "Nice try, but your arguments weren't quite strong enough to change my mind on this.",
+                        "I appreciate the effort, but I remain skeptical. The evidence just wasn't compelling enough.",
+                        "We're done here, and I'm still not seeing enough proof to believe this claim."
+                    ]
             else:
-                if self.conviction <= 30:  # Low conviction for false statements
-                    self.response = "You're right, it's false! Your arguments and evidence have successfully convinced me that this isn't true. I see now why this belief was incorrect."
+                if self.conviction <= 30:
+                    endings = [
+                        "You've successfully debunked this! Your evidence has thoroughly disproven my initial belief.",
+                        "I stand corrected! Your arguments have completely dismantled my previous position.",
+                        "I was wrong - you've shown me clear evidence that this isn't true at all.",
+                        "You've convinced me completely. The evidence against this is overwhelming."
+                    ]
                 else:
-                    self.response = "Discussion over! I still believe this is true. Your arguments were interesting, but not enough to change my mind."
+                    endings = [
+                        "Time's up! Your arguments weren't enough to shake my conviction in this.",
+                        "I've heard your points, but I still believe this is true. You haven't provided enough evidence.",
+                        "Sorry, but I remain convinced. Your arguments didn't effectively counter the evidence.",
+                        "We're done, and I still stand by my initial position. The counter-arguments weren't strong enough."
+                    ]
+            self.response = random.choice(endings)
             self.conversation_area.add_line(f"AI: {self.response}")
-            self.autosave_conversation()  # Autosave at game end
+            self.complete_history.append(f"AI: {self.response}")
+            self.autosave_conversation()
             return True
 
         self.response_count += 1
         self.thinking = True
-        try:
-            # Add current input to conversation area
-            self.conversation_area.add_line(f"Player: {player_input}")
+        self.thinking_dots = 0
+        self.last_dot_update = pygame.time.get_ticks()
 
-            # Keep only last 6 exchanges for display and AI context
-            if len(self.conversation_history) > 6:
-                self.conversation_history = self.conversation_history[-6:]
+        # Add "Thinking..." to conversation area immediately
+        self.conversation_area.add_line(f"AI: Thinking...")
+
+        try:
+            # Add current input to conversation area and history
+            self.conversation_area.add_line(f"Player: {player_input}")
+            self.conversation_history.append(f"Player: {player_input}")
+            self.complete_history.append(f"Player: {player_input}")
+
+            # Keep only last 6 exchanges for context
+            history_pairs = []
+            for i in range(0, len(self.conversation_history)-1, 2):
+                if i+1 < len(self.conversation_history):
+                    history_pairs.append((self.conversation_history[i], self.conversation_history[i+1]))
+            history_pairs = history_pairs[-3:]  # Keep last 3 exchanges
 
             # Format conversation history for AI context
-            history_text = "\n".join(self.conversation_history)
+            history_text = ""
+            for player_msg, ai_msg in history_pairs:
+                history_text += f"{player_msg}\n{ai_msg}\n\n"
+            history_text += f"Player: {player_input}\n"  # Add current input
 
-            # Adjust the prompt based on whether player is trying to convince true or false
-            belief_state = "skeptical" if self.convince_true else "initially believing"
-            goal_state = "believe in" if self.convince_true else "doubt"
-
-            # Calculate urgency based on remaining responses
+            # Calculate response style based on conviction and responses left
             responses_left = self.MAX_RESPONSES - self.response_count
-            urgency_level = "FINAL" if responses_left <= 1 else "URGENT" if responses_left <= 3 else "normal"
+            conviction_level = "high" if self.conviction > 70 else "low" if self.conviction < 30 else "medium"
+
+            # Generate dynamic personality traits based on game state
+            personality_traits = []
+            if self.convince_true:
+                if conviction_level == "low":
+                    personality_traits = ["deeply skeptical", "requires solid evidence", "analytically minded"]
+                elif conviction_level == "medium":
+                    personality_traits = ["cautiously interested", "open to new ideas", "thoughtfully considering"]
+                else:
+                    personality_traits = ["nearly convinced", "excited by the evidence", "eager to understand more"]
+            else:
+                if conviction_level == "high":
+                    personality_traits = ["strongly convinced", "confident in their belief", "seeking to understand opposing views"]
+                elif conviction_level == "medium":
+                    personality_traits = ["starting to question", "weighing both sides", "carefully analyzing"]
+                else:
+                    personality_traits = ["doubting their position", "reconsidering the evidence", "open to being wrong"]
+
+            # Extract key points from player's argument
+            key_points_prompt = f"""Extract 2-3 key points from this argument: "{player_input}"
+            Format: Just the points, one per line, no numbers or bullets."""
+
+            key_points_response = requests.post(
+                'http://localhost:11434/api/generate',
+                json={
+                    "model": "gemma3:4b",
+                    "prompt": key_points_prompt,
+                    "stream": False
+                }
+            )
+            key_points = key_points_response.json()['response'].strip()
 
             response = requests.post(
                 'http://localhost:11434/api/generate',
                 json={
                     "model": "gemma3:4b",
-                    "prompt": f"""You are a {belief_state} AI character in a game. The player's goal is to make you {goal_state} the current scenario.
+                    "prompt": f"""You are an AI with a distinct personality in a debate about: "{self.current_scenario}"
 
-🎯 Current scenario: "{self.current_scenario}"
-💬 Responses remaining: {responses_left} out of {self.MAX_RESPONSES}
-⚡ Urgency level: {urgency_level}
-{'🌟 Current stance: You currently believe this is true, but the player is trying to convince you it is false.' if not self.convince_true else ''}
+Your Current State:
+- Personality: {random.choice(personality_traits)}
+- Conviction Level: {conviction_level}
+- Responses Left: {responses_left}
+- Goal: You are {'being convinced this is true' if self.convince_true else 'being convinced this is false'}
 
-Previous conversation:
+Key Points from Player's Latest Argument:
+{key_points}
+
+Recent Conversation History:
 {history_text}
 
-🔥 Response Guidelines:
-- Be decisive - there are only {responses_left} responses left
-- For FALSE scenarios: Start believing, but be open to changing your mind with good evidence
-- For TRUE scenarios: Start skeptical, but be open to being convinced with good arguments
-- Show your thought process clearly
-- If you're convinced, explain why and what changed your mind
-- If you're not convinced, explain what evidence would change your mind
+Response Guidelines:
+1. NEVER use generic phrases like "Hmm" or "Interesting"
+2. ALWAYS address at least one specific point from the player's argument
+3. Base your response on your conviction level:
+   - High conviction: Challenge their evidence firmly but fairly
+   - Medium conviction: Show openness while raising specific concerns
+   - Low conviction: Acknowledge good points while seeking final clarification
+4. Show clear reasoning for why you agree or disagree with their points
+5. If nearing the end ({responses_left} responses left), be more decisive
+6. Keep responses concise but meaningful
 
-{f'🚨 URGENT: With only {responses_left} responses remaining, you must make a strong decision about your final stance!' if responses_left <= 3 else ''}
-{f'⚠️ FINAL RESPONSE: You must definitively decide if you are convinced or not!' if responses_left <= 1 else ''}
-
-Your response:""",
+Write a natural response that directly addresses their argument:""",
                     "stream": False
                 }
             )
             response_text = response.json()['response']
             self.response = response_text
 
-            # Add AI response to conversation area
+            # Remove the "Thinking..." line before adding the actual response
+            self.conversation_area.lines.pop()
             self.conversation_area.add_line(f"AI: {response_text}")
-
-            # Autosave after each interaction
+            self.conversation_history.append(f"AI: {response_text}")
+            self.complete_history.append(f"AI: {response_text}")
             self.autosave_conversation()
 
-            # Update conviction based on response content
-            if self.convince_true:
-                if any(word in response_text.lower() for word in ["you make a good point", "that's compelling", "i'm starting to believe", "you might be right", "i see your point", "that makes sense"]):
-                    self.conviction = min(100, self.conviction + 25)
-                elif any(word in response_text.lower() for word in ["maybe", "possibly", "could be", "might", "interesting", "that makes sense"]):
-                    self.conviction = min(100, self.conviction + 15)
-                elif any(word in response_text.lower() for word in ["no", "don't", "not", "never", "doubt", "skeptical"]):
-                    self.conviction = max(0, self.conviction - 10)
-            else:
-                if any(word in response_text.lower() for word in ["you make a good point", "that's compelling", "i'm starting to doubt", "you might be right", "i see your point", "that makes sense"]):
-                    self.conviction = max(0, self.conviction - 25)
-                elif any(word in response_text.lower() for word in ["doubt", "maybe not", "could be wrong", "might not", "questionable"]):
-                    self.conviction = max(0, self.conviction - 15)
-                elif any(word in response_text.lower() for word in ["certain", "sure", "definitely", "absolutely"]):
-                    self.conviction = min(100, self.conviction + 10)
+            # Update conviction based on response content and current state
+            conviction_change = 0
+            positive_indicators = ["compelling", "convincing", "good point", "makes sense", "i see", "you're right", "valid", "agree"]
+            negative_indicators = ["doubt", "skeptical", "not sure", "unconvinced", "disagree", "but still", "however", "yet"]
+            strong_indicators = ["absolutely", "completely", "definitely", "totally", "fully", "strongly"]
 
-            # Force a decision on the last response if conviction is appropriate
-            responses_left = self.MAX_RESPONSES - self.response_count
+            # Calculate base conviction change
+            response_lower = response_text.lower()
+            if self.convince_true:
+                for indicator in positive_indicators:
+                    if indicator in response_lower:
+                        base_change = 10
+                        # Check if indicator is preceded by a strong indicator
+                        for strong in strong_indicators:
+                            if f"{strong} {indicator}" in response_lower:
+                                base_change *= 1.5
+                        conviction_change += base_change
+                for indicator in negative_indicators:
+                    if indicator in response_lower:
+                        conviction_change -= 5
+            else:
+                for indicator in positive_indicators:
+                    if indicator in response_lower:
+                        base_change = 10
+                        for strong in strong_indicators:
+                            if f"{strong} {indicator}" in response_lower:
+                                base_change *= 1.5
+                        conviction_change -= base_change
+                for indicator in negative_indicators:
+                    if indicator in response_lower:
+                        conviction_change += 5
+
+            # Apply conviction change with momentum and context
+            if self.convince_true:
+                if self.conviction > 50:  # Already leaning towards convinced
+                    conviction_change *= 1.5
+                elif responses_left <= 3:  # Near the end
+                    conviction_change *= 1.2
+                self.conviction = min(100, max(0, self.conviction + conviction_change))
+            else:
+                if self.conviction < 50:  # Already leaning towards doubt
+                    conviction_change *= 1.5
+                elif responses_left <= 3:  # Near the end
+                    conviction_change *= 1.2
+                self.conviction = min(100, max(0, self.conviction + conviction_change))
+
+            # Force a decision on the last response if appropriate
             if responses_left <= 1:
                 if self.convince_true and self.conviction >= 70:
                     self.conviction = 100
-                    final_response = "I'm convinced! Your arguments and evidence have successfully changed my mind. I now believe this is true."
-                    self.conversation_area.add_line(f"AI: {final_response}")
                     return True
                 elif not self.convince_true and self.conviction <= 30:
                     self.conviction = 0
-                    final_response = "You're right, it's false! Your evidence and reasoning have convinced me that this isn't true. I see now why this belief was incorrect."
-                    self.conversation_area.add_line(f"AI: {final_response}")
                     return True
 
         except Exception as e:
+            # Remove the "Thinking..." line before adding the error response
+            self.conversation_area.lines.pop()
             error_response = "Error connecting to AI model"
             self.conversation_area.add_line(f"AI: {error_response}")
-            self.autosave_conversation()  # Autosave even after error
+            self.complete_history.append(f"AI: {error_response}")
+            self.autosave_conversation()
+
         self.thinking = False
         return False
 
@@ -637,10 +954,10 @@ Your response:""",
         self.response_count = 0
         self.scenario_area.clear()
         self.conversation_area.clear()
-        self.scenario_area.add_line(f"Scenario: {self.current_scenario}")
-        self.scenario_area.add_line(f"Your goal: Convince the AI that this is {'TRUE' if self.convince_true else 'FALSE'}")
-        self.scenario_area.add_line(f"Responses remaining: {self.MAX_RESPONSES - self.response_count}")
-        self.conversation_area.add_line(f"AI: {self.response}")
+        self.scenario_area.add_line(f"{EMOJI_SCENARIO} Scenario: {self.current_scenario}")
+        self.scenario_area.add_line(f"{EMOJI_GOAL} Your goal: Convince the AI that this is {'TRUE' if self.convince_true else 'FALSE'}")
+        self.scenario_area.add_line(f"{EMOJI_RESPONSES} Responses remaining: {self.MAX_RESPONSES - self.response_count}")
+        self.conversation_area.add_line(f"{EMOJI_AI} AI: {self.response}")
         self.complete_history.append(f"AI: {self.response}")
 
         # Autosave initial state
@@ -674,11 +991,54 @@ class InputBox:
         self.lines = []
         self.cursor_visible = True
         self.cursor_timer = 0
-        self.cursor_blink_rate = 30  # Frames per blink
+        self.cursor_blink_rate = 30
+        self.selection_start = None
+        self.selection_end = None
+        self.cursor_pos = 0
+        self.placeholder_text = "Type your argument here..."
+        self.dragging = False
 
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left click only
+            # Handle mouse click
             self.active = self.rect.collidepoint(event.pos)
+            if self.active:
+                # Calculate cursor position based on click
+                click_x = event.pos[0] - (self.rect.x + PADDING)
+                click_y = event.pos[1] - (self.rect.y + PADDING)
+                line_index = click_y // LINE_HEIGHT
+                if line_index < len(self.lines):
+                    line = self.lines[line_index]
+                    for i, char in enumerate(line):
+                        if font.size(line[:i])[0] > click_x:
+                            self.cursor_pos = sum(len(l) for l in self.lines[:line_index]) + i
+                            break
+                    else:
+                        self.cursor_pos = sum(len(l) for l in self.lines[:line_index]) + len(line)
+                self.selection_start = self.cursor_pos
+                self.selection_end = self.cursor_pos
+                self.dragging = True
+
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:  # Left click release
+            if self.active and self.dragging:
+                self.selection_end = self.cursor_pos
+                self.dragging = False
+
+        elif event.type == pygame.MOUSEMOTION:
+            if self.active and self.dragging:  # Only update selection while dragging
+                click_x = event.pos[0] - (self.rect.x + PADDING)
+                click_y = event.pos[1] - (self.rect.y + PADDING)
+                line_index = max(0, min(len(self.lines) - 1, click_y // LINE_HEIGHT))
+                if line_index < len(self.lines):
+                    line = self.lines[line_index]
+                    for i, char in enumerate(line):
+                        if font.size(line[:i])[0] > click_x:
+                            self.cursor_pos = sum(len(l) for l in self.lines[:line_index]) + i
+                            break
+                    else:
+                        self.cursor_pos = sum(len(l) for l in self.lines[:line_index]) + len(line)
+                    self.selection_end = self.cursor_pos
+
         elif event.type == pygame.KEYDOWN and self.active:
             if event.key == pygame.K_RETURN:
                 if event.mod & pygame.KMOD_SHIFT:  # Shift+Enter for new line
@@ -688,57 +1048,173 @@ class InputBox:
                     text = self.text
                     self.text = ""
                     self.lines = []
+                    self.selection_start = None
+                    self.selection_end = None
+                    self.cursor_pos = 0
                     return text
             elif event.key == pygame.K_BACKSPACE:
-                self.text = self.text[:-1]
+                if self.selection_start is not None and self.selection_start != self.selection_end:
+                    # Delete selected text
+                    start = min(self.selection_start, self.selection_end)
+                    end = max(self.selection_start, self.selection_end)
+                    self.text = self.text[:start] + self.text[end:]
+                    self.cursor_pos = start
+                    self.selection_start = self.selection_end = None
+                elif self.cursor_pos > 0:
+                    self.text = self.text[:self.cursor_pos-1] + self.text[self.cursor_pos:]
+                    self.cursor_pos -= 1
+            elif event.key == pygame.K_DELETE:
+                if self.selection_start is not None and self.selection_start != self.selection_end:
+                    # Delete selected text
+                    start = min(self.selection_start, self.selection_end)
+                    end = max(self.selection_start, self.selection_end)
+                    self.text = self.text[:start] + self.text[end:]
+                    self.cursor_pos = start
+                    self.selection_start = self.selection_end = None
+                elif self.cursor_pos < len(self.text):
+                    self.text = self.text[:self.cursor_pos] + self.text[self.cursor_pos + 1:]
+            elif event.key == pygame.K_LEFT:
+                if event.mod & pygame.KMOD_SHIFT:
+                    if self.selection_start is None:
+                        self.selection_start = self.cursor_pos
+                    if self.cursor_pos > 0:
+                        self.cursor_pos -= 1
+                        self.selection_end = self.cursor_pos
+                else:
+                    if self.selection_start is not None:
+                        self.cursor_pos = min(self.selection_start, self.selection_end)
+                        self.selection_start = self.selection_end = None
+                    elif self.cursor_pos > 0:
+                        self.cursor_pos -= 1
+            elif event.key == pygame.K_RIGHT:
+                if event.mod & pygame.KMOD_SHIFT:
+                    if self.selection_start is None:
+                        self.selection_start = self.cursor_pos
+                    if self.cursor_pos < len(self.text):
+                        self.cursor_pos += 1
+                        self.selection_end = self.cursor_pos
+                else:
+                    if self.selection_start is not None:
+                        self.cursor_pos = max(self.selection_start, self.selection_end)
+                        self.selection_start = self.selection_end = None
+                    elif self.cursor_pos < len(self.text):
+                        self.cursor_pos += 1
+            elif event.key == pygame.K_c and event.mod & pygame.KMOD_CTRL:
+                if self.selection_start is not None and self.selection_start != self.selection_end:
+                    start = min(self.selection_start, self.selection_end)
+                    end = max(self.selection_start, self.selection_end)
+                    pygame.scrap.put(pygame.SCRAP_TEXT, self.text[start:end].encode())
+            elif event.key == pygame.K_v and event.mod & pygame.KMOD_CTRL:
+                try:
+                    clipboard_text = pygame.scrap.get(pygame.SCRAP_TEXT).decode()
+                    if self.selection_start is not None and self.selection_start != self.selection_end:
+                        start = min(self.selection_start, self.selection_end)
+                        end = max(self.selection_start, self.selection_end)
+                        self.text = self.text[:start] + clipboard_text + self.text[end:]
+                        self.cursor_pos = start + len(clipboard_text)
+                        self.selection_start = self.selection_end = None
+                    else:
+                        self.text = self.text[:self.cursor_pos] + clipboard_text + self.text[self.cursor_pos:]
+                        self.cursor_pos += len(clipboard_text)
+                except:
+                    pass
+            elif event.key == pygame.K_a and event.mod & pygame.KMOD_CTRL:
+                # Select all text
+                self.selection_start = 0
+                self.selection_end = len(self.text)
+                self.cursor_pos = self.selection_end
             else:
-                self.text += event.unicode
+                if self.selection_start is not None and self.selection_start != self.selection_end:
+                    start = min(self.selection_start, self.selection_end)
+                    end = max(self.selection_start, self.selection_end)
+                    self.text = self.text[:start] + event.unicode + self.text[end:]
+                    self.cursor_pos = start + 1
+                    self.selection_start = self.selection_end = None
+                else:
+                    self.text = self.text[:self.cursor_pos] + event.unicode + self.text[self.cursor_pos:]
+                    self.cursor_pos += 1
             # Wrap text
             self.lines = wrap_text(self.text.replace('\n', ' '), font, self.text_width)
         return None
 
     def draw(self, surface):
-        # Draw background
-        pygame.draw.rect(surface, LIGHT_GRAY, self.rect)
-        pygame.draw.rect(surface, BLACK, self.rect, 2)
+        # Draw background with subtle gradient
+        color = WHITE if self.active else LIGHT_GRAY
+        pygame.draw.rect(surface, color, self.rect, border_radius=BORDER_RADIUS)
 
-        # Draw text
+        # Draw border with glow effect when active
+        if self.active:
+            glow_rect = self.rect.copy()
+            glow_rect.inflate_ip(4, 4)
+            pygame.draw.rect(surface, (*PRIMARY_COLOR, 100), glow_rect, 4, border_radius=BORDER_RADIUS)
+
+        border_color = PRIMARY_COLOR if self.active else TEXT_COLOR
+        pygame.draw.rect(surface, border_color, self.rect, 2, border_radius=BORDER_RADIUS)
+
+        # Draw placeholder text if empty
+        if not self.text and not self.active:
+            placeholder_surface = font.render(self.placeholder_text, True, (150, 150, 150))
+            surface.blit(placeholder_surface, (self.rect.x + PADDING, self.rect.y + PADDING))
+
+        # Draw text and selection with improved styling
         y = self.rect.y + PADDING
-        for line in self.lines:
-            text_surface = font.render(line, True, BLACK)
+        current_pos = 0
+        for i, line in enumerate(self.lines):
+            if self.selection_start is not None and self.selection_end is not None:
+                start = min(self.selection_start, self.selection_end)
+                end = max(self.selection_start, self.selection_end)
+                if start < current_pos + len(line) and end > current_pos:
+                    sel_start = max(0, start - current_pos)
+                    sel_end = min(len(line), end - current_pos)
+                    if sel_start < sel_end:
+                        sel_rect = pygame.Rect(
+                            self.rect.x + PADDING + font.size(line[:sel_start])[0],
+                            y,
+                            font.size(line[sel_start:sel_end])[0],
+                            LINE_HEIGHT
+                        )
+                        pygame.draw.rect(surface, (*PRIMARY_COLOR, 50), sel_rect,
+                                       border_radius=4)
+
+            text_surface = font.render(line, True, TEXT_COLOR)
             surface.blit(text_surface, (self.rect.x + PADDING, y))
             y += LINE_HEIGHT
+            current_pos += len(line)
 
-        # Draw cursor
+        # Draw cursor with animation
         if self.active:
             self.cursor_timer = (self.cursor_timer + 1) % (self.cursor_blink_rate * 2)
             if self.cursor_timer < self.cursor_blink_rate:
-                if self.lines:
-                    last_line = self.lines[-1]
-                    cursor_x = self.rect.x + PADDING + font.size(last_line)[0]
-                    cursor_y = self.rect.y + PADDING + (len(self.lines) - 1) * LINE_HEIGHT
-                else:
-                    cursor_x = self.rect.x + PADDING
-                    cursor_y = self.rect.y + PADDING
-                pygame.draw.line(surface, BLACK, (cursor_x, cursor_y),
-                               (cursor_x, cursor_y + LINE_HEIGHT))
+                cursor_x = self.rect.x + PADDING
+                cursor_y = self.rect.y + PADDING
+                current_pos = 0
+                for line in self.lines:
+                    if current_pos + len(line) >= self.cursor_pos:
+                        cursor_x += font.size(line[:self.cursor_pos - current_pos])[0]
+                        break
+                    cursor_y += LINE_HEIGHT
+                    current_pos += len(line)
+                pygame.draw.line(surface, PRIMARY_COLOR, (cursor_x, cursor_y),
+                               (cursor_x, cursor_y + LINE_HEIGHT), 2)
 
 def main():
     # Start with the menu
     menu = StartMenu()
     convince_true = menu.run()
 
-    if convince_true is None:  # User closed the window
+    if convince_true is None:
         return
 
     clock = pygame.time.Clock()
     ai = AISprite(convince_true)
     player = Player()
-    input_box = InputBox(50, WINDOW_HEIGHT - 100, WINDOW_WIDTH - 100, 80)
-    game_over = False
 
-    # Create autoplay button
-    autoplay_button = Button(WINDOW_WIDTH - 150, WINDOW_HEIGHT - 50, 120, 40, "Autoplay", BLUE)
+    # Create input area with adjusted positioning for new font sizes
+    input_box = InputBox(50, WINDOW_HEIGHT - 100, WINDOW_WIDTH - 300, 80)
+    send_button = Button(WINDOW_WIDTH - 230, WINDOW_HEIGHT - 100, 180, 80, f"Send {EMOJI_SEND}", PRIMARY_COLOR)
+    autoplay_button = Button(WINDOW_WIDTH - 230, WINDOW_HEIGHT - 160, 180, 50, f"Auto {EMOJI_AUTO}", PRIMARY_COLOR)
+
+    game_over = False
 
     while True:
         current_time = pygame.time.get_ticks()
@@ -748,56 +1224,68 @@ def main():
                 pygame.quit()
                 return
 
-            # Handle text area scrolling
             ai.scenario_area.handle_event(event)
             ai.conversation_area.handle_event(event)
 
-            # Handle autoplay button
-            if autoplay_button.handle_event(event):
-                ai.autoplay = not ai.autoplay
+            if autoplay_button.handle_event(event) and not game_over:
+                ai.waiting_for_auto_response = True
                 ai.last_autoplay_time = current_time
-                autoplay_button.text = "Stop Auto" if ai.autoplay else "Autoplay"
 
-            # Handle input box if not in autoplay mode
-            if not ai.autoplay:
+            if send_button.handle_event(event) and not game_over:
+                if input_box.text.strip():
+                    game_over = ai.get_ai_response(input_box.text)
+                    input_box.text = ""
+                    input_box.lines = []
+                    input_box.selection_start = None
+                    input_box.selection_end = None
+                    input_box.cursor_pos = 0
+
+            if not ai.waiting_for_auto_response:
                 result = input_box.handle_event(event)
                 if result is not None and not game_over:
                     game_over = ai.get_ai_response(result)
 
-        # Handle autoplay logic
-        if ai.autoplay and not game_over and current_time - ai.last_autoplay_time >= ai.autoplay_delay:
+        if ai.waiting_for_auto_response and not game_over and current_time - ai.last_autoplay_time >= ai.autoplay_delay:
             automated_response = ai.get_automated_response()
             game_over = ai.get_ai_response(automated_response)
-            ai.last_autoplay_time = current_time
+            ai.waiting_for_auto_response = False  # Reset after generating one response
 
-        screen.fill(WHITE)
+        # Draw background with subtle pattern
+        screen.fill(BACKGROUND_COLOR)
+        for i in range(0, WINDOW_WIDTH, 20):
+            for j in range(0, WINDOW_HEIGHT, 20):
+                pygame.draw.circle(screen, (240, 242, 245), (i, j), 1)
 
-        # Draw input box (grayed out during autoplay)
-        if ai.autoplay:
+        # Draw UI elements
+        if ai.waiting_for_auto_response:
             pygame.draw.rect(screen, GRAY, input_box.rect)
         input_box.draw(screen)
+        send_button.draw(screen)
+        autoplay_button.draw(screen)
 
-        # Draw sprites
         player.draw()
         ai.draw()
 
-        # Draw autoplay button
-        autoplay_button.draw(screen)
-
-        # Check if game is over
+        # Draw game over state
         if game_over:
+            # Create semi-transparent overlay
+            overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+            overlay.fill(BACKGROUND_COLOR)
+            overlay.set_alpha(200)
+            screen.blit(overlay, (0, 0))
+
             if (ai.convince_true and ai.conviction >= 100) or (not ai.convince_true and ai.conviction <= 0):
-                win_text = font.render("You convinced the AI! Press R to restart", True, BLACK)
+                win_text = font.render("🎉 You convinced the AI! Press R to restart", True, SECONDARY_COLOR)
             else:
                 if ai.convince_true:
-                    win_text = font.render("Game Over - AI remains unconvinced! Press R to restart", True, BLACK)
+                    win_text = font.render("❌ Game Over - AI remains unconvinced! Press R to restart", True, ACCENT_COLOR)
                 else:
-                    win_text = font.render("Game Over - AI still believes it's true! Press R to restart", True, BLACK)
-            screen.blit(win_text, (WINDOW_WIDTH // 2 - 250, WINDOW_HEIGHT // 2))
+                    win_text = font.render("❌ Game Over - AI still believes it's true! Press R to restart", True, ACCENT_COLOR)
 
-            # Stop autoplay when game ends
-            ai.autoplay = False
-            autoplay_button.text = "Autoplay"
+            text_rect = win_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+            screen.blit(win_text, text_rect)
+
+            ai.waiting_for_auto_response = False
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_r]:
