@@ -1,0 +1,9 @@
+Scenario: Animals can communicate telepathically.
+Goal: Convince AI that this is FALSE
+Current Conviction: 100%
+Responses remaining: 10
+
+Conversation:
+--------------------------------------------------
+AI: I believe this is true. Prove me wrong!
+--------------------------------------------------

@@ -1,49 +1,77 @@
-# Convince the AI Game
+# Convince the AI! Game
 
-A fun interactive game where you try to convince an AI character about various scenarios using the Ollama Gemma 3:4b model.
+A fun debate game where you try to convince an AI character about various scenarios using the Gemma 3:4b model.
 
-## Prerequisites
+## Requirements
 
-1. Python 3.7 or higher
-2. Ollama installed and running locally
-3. Gemma 3:4b model pulled in Ollama
+- macOS
+- Python 3
+- pip3
+- Internet connection (for initial setup)
 
 ## Installation
 
-1. Install the required Python packages:
-```bash
-pip install -r requirements.txt
-```
+1. Download or clone this repository
+2. Open Terminal and navigate to the game directory
+3. Make the installer executable:
+   ```bash
+   chmod +x install.sh
+   ```
+4. Run the installer:
+   ```bash
+   ./install.sh
+   ```
 
-2. Make sure Ollama is running locally and you have pulled the Gemma 3:4b model:
-```bash
-ollama pull gemma:3b
-```
+The installer will:
+- Check for and install Ollama if needed
+- Download the Gemma 3:4b model
+- Install required Python packages
+- Set up the game files
+
+## Running the Game
+
+1. Make sure Ollama is running:
+   ```bash
+   ollama serve
+   ```
+2. Start the game:
+   ```bash
+   python3 game.py
+   ```
 
 ## How to Play
 
-1. Run the game:
-```bash
-python game.py
-```
-
-2. Game Instructions:
-- A random scenario will be presented at the top of the screen
-- Type your arguments in the input box at the bottom
-- Press Enter to submit your argument
-- The AI will respond and show its level of conviction
-- Try to convince the AI by providing compelling arguments
-- The game ends when the AI is fully convinced (conviction meter reaches 100%)
-- Press 'R' to restart with a new scenario
+1. Choose whether to convince the AI that a scenario is TRUE or FALSE
+2. Type your arguments in the input box
+3. Press Enter to send your message
+4. The AI will respond and show its conviction level
+5. Try to convince the AI before running out of responses!
 
 ## Features
 
-- Interactive text input
-- Real-time AI responses using Ollama
+- Dynamic AI responses using Gemma 3:4b
 - Visual conviction meter
-- Multiple random scenarios
-- Simple and intuitive interface
+- Automated responses option
+- Conversation saving
+- Unique scenarios for each game
 
-## Note
+## Troubleshooting
 
-Make sure Ollama is running on your local machine (default port 11434) before starting the game.
+If you encounter any issues:
+
+1. Make sure Ollama is running:
+   ```bash
+   ollama serve
+   ```
+2. Check your Python version:
+   ```bash
+   python3 --version
+   ```
+3. Verify the Gemma model is installed:
+   ```bash
+   ollama list
+   ```
+
+## License
+
+This project is open source and available under the MIT License.
