@@ -77,11 +77,11 @@ fi
 echo -e "${YELLOW}Installing Python dependencies...${NC}"
 pip install -r requirements.txt
 
-# Create assets directory if it doesn't exist
-if [ ! -d "assets/sprites" ]; then
-    echo -e "${YELLOW}Creating assets directory...${NC}"
-    mkdir -p assets/sprites
-fi
+# Create necessary directories
+echo -e "${YELLOW}Creating directories...${NC}"
+mkdir -p assets/sprites
+mkdir -p conversations
+
 
 # Make the game executable
 echo -e "${YELLOW}Setting up the game...${NC}"

@@ -349,7 +349,6 @@ Generate ONE scenario following these examples. Return ONLY the statement, nothi
         self.autoplay = False
         self.last_autoplay_time = 0
         self.autoplay_delay = 2000  # 2 seconds between responses
-        self.save_button = None  # Will be created when game ends
         self.autosave_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Create text areas with more space
@@ -589,7 +588,11 @@ Your response:""",
         if not hasattr(self, 'autosave_timestamp'):
             self.autosave_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        filename = f"autosave_{self.autosave_timestamp}.txt"
+        # Ensure conversations directory exists
+        if not os.path.exists("conversations"):
+            os.makedirs("conversations")
+
+        filename = f"conversations/autosave_{self.autosave_timestamp}.txt"
 
         try:
             with open(filename, "w") as f:
@@ -733,7 +736,6 @@ def main():
     player = Player()
     input_box = InputBox(50, WINDOW_HEIGHT - 100, WINDOW_WIDTH - 100, 80)
     game_over = False
-    save_status = None
 
     # Create autoplay button
     autoplay_button = Button(WINDOW_WIDTH - 150, WINDOW_HEIGHT - 50, 120, 40, "Autoplay", BLUE)
@@ -755,11 +757,6 @@ def main():
                 ai.autoplay = not ai.autoplay
                 ai.last_autoplay_time = current_time
                 autoplay_button.text = "Stop Auto" if ai.autoplay else "Autoplay"
-
-            # Handle save button if game is over
-            if game_over and ai.save_button:
-                if ai.save_button.handle_event(event):
-                    save_status = ai.save_conversation()
 
             # Handle input box if not in autoplay mode
             if not ai.autoplay:
@@ -789,10 +786,6 @@ def main():
 
         # Check if game is over
         if game_over:
-            # Create save button if it doesn't exist
-            if not ai.save_button:
-                ai.save_button = Button(WINDOW_WIDTH // 2 - 60, WINDOW_HEIGHT // 2 + 40, 120, 40, "Save Chat", GREEN)
-
             if (ai.convince_true and ai.conviction >= 100) or (not ai.convince_true and ai.conviction <= 0):
                 win_text = font.render("You convinced the AI! Press R to restart", True, BLACK)
             else:
@@ -802,14 +795,6 @@ def main():
                     win_text = font.render("Game Over - AI still believes it's true! Press R to restart", True, BLACK)
             screen.blit(win_text, (WINDOW_WIDTH // 2 - 250, WINDOW_HEIGHT // 2))
 
-            # Draw save button
-            ai.save_button.draw(screen)
-
-            # Draw save status if exists
-            if save_status:
-                status_text = font.render(save_status, True, BLACK)
-                screen.blit(status_text, (WINDOW_WIDTH // 2 - 150, WINDOW_HEIGHT // 2 + 90))
-
             # Stop autoplay when game ends
             ai.autoplay = False
             autoplay_button.text = "Autoplay"
@@ -818,8 +803,6 @@ def main():
             if keys[pygame.K_r]:
                 ai.reset()
                 game_over = False
-                save_status = None
-                ai.save_button = None
 
         pygame.display.flip()
         clock.tick(60)
