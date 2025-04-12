@@ -1,0 +1,9 @@
+Scenario: Animals can communicate with each other telepathically.
+Goal: Convince AI that this is TRUE
+Current Conviction: 0%
+Responses remaining: 10
+
+Conversation:
+--------------------------------------------------
+AI: Convince me!
+--------------------------------------------------
